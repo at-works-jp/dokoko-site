@@ -35,7 +35,7 @@ def school_page(sid, d):
     g = GAME[sid]; name = g['name']; pref = PREF[g['region']]
     n = len(d['items'])
     others = [(k, GAME[k]['name']) for k in S if k != sid and PREF[GAME[k]['region']] == pref]
-    title = f'{name}あるある｜卒業生ならわかる{n}のこと'
+    title = f'{name}あるある｜卒業生ならわかる{n}つのこと'
     words = '・'.join(h for h, _ in d['items'][:3])
     desc = f'{name}（{pref}）の卒業生ならわかるあるあるを{n}つ。{words}…あなたはいくつわかる？'
     lis = ''.join(f'<li data-t="{e(h)}"><b>{e(h)}</b><span>{e(c)}</span>'
@@ -67,7 +67,7 @@ f.addEventListener('submit',async ev=>{{ ev.preventDefault(); const t=f.text.val
   m.textContent='ありがとう！ほかの人からも同じ声が届いたら ここにのります'; f.text.value=''; f.querySelector('button').disabled=false; }});
 </script>'''
     body = f'''<div class="crumb"><a href="/">どこ高？</a> ＞ <a href="/aruaru/">学校あるある</a> ＞ {e(pref)} ＞ {e(name)}</div>
-<h1><em>{e(name)}</em>あるある<br>卒業生ならわかる{n}のこと</h1>
+<h1><em>{e(name)}</em>あるある<br>卒業生ならわかる{n}つのこと</h1>
 <p class="lead">{e(name)}（{e(pref)}）を出た人なら きっとわかる。いくつ当てはまるか数えてみてください。</p>{nick}
 <ol class="aru">{lis}</ol>
 {voices}
