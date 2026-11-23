@@ -24,7 +24,7 @@ def head(title, desc, path, extra=''):
 <title>{e(title)}</title><meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{SITE}{path}">
 <meta name="google-site-verification" content="zX-gX4xm_eI0b0Iq_cPIstdALPUz2ahmtHjU9jHyhtk">
-<meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:type" content="website"><meta property="og:url" content="{SITE}{path}">
+<meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}"><meta property="og:type" content="website"><meta property="og:url" content="{SITE}{path}"><meta property="og:image" content="https://at-works-jp.github.io/dokoko/now/img/please.png"><meta property="og:site_name" content="どこ高？"><meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
 <style>{CSS}</style>{extra}</head><body><div class="wrap">
