@@ -48,7 +48,7 @@ def school_page(sid, d):
     oth = ''
     if others:
         oth = f'<h2>{e(pref)}のほかの高校のあるある</h2><div class="others">' + ''.join(f'<a href="/aruaru/{k}/">{e(nm)}</a>' for k, nm in others) + '</div>'
-    js = f'''<script>
+    js = rf'''<script>
 const API='{API}', SID='{sid}', SCHOOL={json.dumps(name, ensure_ascii=False)};
 let CID=''; try{{ CID=localStorage.getItem('aru-cid')||''; if(!CID){{ CID=Math.random().toString(36).slice(2,12); localStorage.setItem('aru-cid',CID); }} }}catch(e){{}}
 function call(fn,arg){{ try{{ return fetch(API,{{method:'POST',body:JSON.stringify({{fn,args:[arg]}})}}).then(r=>r.json()).catch(()=>null); }}catch(e){{ return Promise.resolve(null); }} }}
@@ -57,15 +57,42 @@ document.querySelectorAll('.aru li').forEach(li=>{{ const t=li.dataset.t, box=li
   const mark=a=>{{ box.innerHTML='<em>'+(a==='yes'?'わかる！ありがとう':'教えてくれてありがとう')+'</em>'; }};
   if(voted[t]) mark(voted[t]);
   box.addEventListener('click',ev=>{{ const b=ev.target.closest('button'); if(!b) return; const a=b.classList.contains('y')?'yes':'no';
-    call('voteAruaru',{{sid:SID,school:SCHOOL,text:t,ans:a}}); voted[t]=a; try{{ localStorage.setItem('aru-v-'+SID,JSON.stringify(voted)); }}catch(e){{}} mark(a); }}); }});
+    call('voteAruaru',{{sid:SID,school:SCHOOL,text:t,ans:a}}); try{{ window.ARULOG&&ARULOG('vote-'+a); }}catch(e){{}} voted[t]=a; try{{ localStorage.setItem('aru-v-'+SID,JSON.stringify(voted)); }}catch(e){{}} mark(a); }}); }});
 const f=document.getElementById('post');
 f.addEventListener('submit',async ev=>{{ ev.preventDefault(); const t=f.text.value.trim(), m=document.getElementById('msg');
   if(t.length<3){{ m.textContent='3文字以上で書いてください'; return; }}
   if(/先生|せんせい|さん$|くん$|ちゃん$/.test(t)){{ m.textContent='人の名前が入るものは送れません'; return; }}
   f.querySelector('button').disabled=true; m.textContent='送っています…';
+  try{{ window.ARULOG&&ARULOG('post'); }}catch(e){{}}
   const r=await call('postAruaru',{{sid:SID,school:SCHOOL,text:t,grad:'',client:CID}});
   if(r&&r.ok&&r.r&&r.r.ok===false){{ m.textContent=r.r.msg||'送れませんでした'; f.querySelector('button').disabled=false; return; }}
   m.textContent='ありがとう！ほかの人からも同じ声が届いたら ここにのります'; f.text.value=''; f.querySelector('button').disabled=false; }});
+
+// ---- 見られ方の記録（運営の端末は ?own=1 を一度開くと記録しない）
+(function(){{ let own=false; try{{ if(/[?&]own=1/.test(location.search)) localStorage.setItem('aru-own','1'); own=localStorage.getItem('aru-own')==='1'; }}catch(e){{}}
+  if(own||!/mendomilab\.com$/.test(location.hostname)) return;
+  const vid=Math.random().toString(36).slice(2,10), ua=navigator.userAgent||'';
+  let os='その他'; if(/iPhone|iPod/.test(ua)) os='iPhone'; else if(/iPad/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)) os='iPad'; else if(/Android/.test(ua)) os='Android'; else if(/Windows/.test(ua)) os='Windows'; else if(/Macintosh/.test(ua)) os='Mac';
+  let inapp=''; if(/Line\//i.test(ua)) inapp='LINE'; else if(/Instagram/i.test(ua)) inapp='Instagram'; else if(/FBAN|FBAV/.test(ua)) inapp='Facebook';
+  let tz=''; try{{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }}catch(e){{}}
+  let rh=''; try{{ rh=document.referrer?new URL(document.referrer).hostname:''; }}catch(e){{}}
+  const base={{vid,client:CID,from:'aru',sid:SID,school:SCHOOL,ref:rh||'(なし)',refurl:(document.referrer||'').slice(0,300),os,inapp,mobile:/Mobi|iPhone|Android/.test(ua)?1:0,
+    screen:(screen.width||0)+'x'+(screen.height||0),view:innerWidth+'x'+innerHeight,dpr:devicePixelRatio||1,lang:navigator.language||'',tz,tzo:-new Date().getTimezoneOffset(),page:location.href.slice(0,200)}};
+  function send(ev,extra,beacon){{ const body=JSON.stringify({{fn:'logMaker',args:[Object.assign({{}},base,{{ev}},extra||{{}})]}});
+    try{{ if(beacon&&navigator.sendBeacon&&navigator.sendBeacon(API,body)) return; }}catch(e){{}} try{{ fetch(API,{{method:'POST',keepalive:true,body}}); }}catch(e){{}} }}
+  let shown=0, since=document.visibilityState==='visible'?Date.now():0, maxScroll=0, seen=0, sent=0;
+  const items=[...document.querySelectorAll('.aru li')];
+  function measure(){{ const h=document.documentElement.scrollHeight-innerHeight; const p=h>0?Math.round(100*scrollY/h):100; if(p>maxScroll) maxScroll=Math.min(100,p);
+    items.forEach((li,i)=>{{ if(li.getBoundingClientRect().top<innerHeight*0.85&&i+1>seen) seen=i+1; }}); }}
+  addEventListener('scroll',measure,{{passive:true}}); measure();
+  const dur=()=>Math.round((shown+(since?Date.now()-since:0))/1000);
+  window.ARULOG=(tag)=>send('leave',{{dur:dur(),scroll:maxScroll,sect:String(seen),shares:tag}},true);
+  function leave(){{ if(dur()<=sent) return; sent=dur(); send('leave',{{dur:sent,scroll:maxScroll,sect:String(seen)}},true); }}
+  document.addEventListener('visibilitychange',()=>{{ if(document.visibilityState==='hidden'){{ if(since){{ shown+=Date.now()-since; since=0; }} leave(); }} else since=Date.now(); }});
+  addEventListener('pagehide',leave);
+  send('open',{{scroll:maxScroll,sect:String(seen)}});
+  document.querySelectorAll('a.btn').forEach(a=>a.addEventListener('click',()=>window.ARULOG('go-dokoko')));
+}})();
 </script>'''
     body = f'''<div class="crumb"><a href="/">どこ高？</a> ＞ <a href="/aruaru/">学校あるある</a> ＞ {e(pref)} ＞ {e(name)}</div>
 <h1><em>{e(name)}</em>あるある<br>卒業生ならわかる{n}つのこと</h1>
